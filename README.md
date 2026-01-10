@@ -52,29 +52,16 @@
     ```bash
     pip install -r requirements.txt
     ```
-
     *Note: Includes `spotdl` and `yt-dlp` for functionality.*
 
 3. **Install FFmpeg**:
     * **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html) and add to PATH.
     * **Mac**: `brew install ffmpeg`
 
-3.  **Install FFmpeg**:
-    *   **Windows**: [Download FFmpeg](https://ffmpeg.org/download.html) and add to PATH.
-    *   **Mac**: `brew install ffmpeg`
-
-4.  **(Optional) Install Deepfake/Transcription/PDF Support**:
-
-    ```bash
-    # For Deepfake Detection
-    pip install torch
-    
-    # For MIDI Transcription (Optional, Blocked on Python 3.12 due to TensorFlow conflict)
-    # pip install basic-pitch
-    
-    # For PDF Reporting (Optional, Blocked on Python 3.12)
-    # pip install weasyprint
-    ```
+4. **(Optional) Advanced Dependencies**:
+    *   For Deepfake Detection (Recommended): `pip install torch`
+    *   For MIDI Transcription (Python <3.12 only): `pip install basic-pitch`
+    *   For PDF Reporting (Python <3.12 only): `pip install weasyprint`
 
 ---
 
@@ -85,11 +72,10 @@
 Simply run the tool without arguments to launch the Wizard:
 
 ```bash
-python -m src.main
+python src/main.py --interactive
 ```
 
 The wizard will guide you through:
-
 1.  **Project Name**: Organize your results.
 2.  **Inputs**: Add Folders, Files, or **Spotify/YouTube URLs**.
 3.  **Mode**: Choose from Quick (30s) to Forensic (30m+).
@@ -100,7 +86,7 @@ The wizard will guide you through:
 For automation or power users:
 
 ```bash
-python -m src.main \
+python src/main.py \
   --input "https://open.spotify.com/track/..." \
   --project "Analysis_V1" \
   --mode forensic \
