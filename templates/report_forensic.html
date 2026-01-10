@@ -1,0 +1,9 @@
+{% include 'report_template.html' %}
+<div class="container">
+    <div class="section" style="margin-top: 50px; padding-top: 20px; border-top: 5px solid #000;">
+        <h2>🔬 PROTOTYPE: Raw Data Export (JSON)</h2>
+        <pre style="background: #f4f4f4; padding: 20px; overflow-x: auto; border: 1px solid #ddd; font-size: 12px;">
+{{ results | tojson(indent=4) }}
+        </pre>
+    </div>
+</div>

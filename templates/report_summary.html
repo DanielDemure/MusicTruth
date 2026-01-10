@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Summary: {{ filename }}</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 100px;
+        }
+
+        .score {
+            font-size: 10em;
+            margin: 0;
+
+            color: {
+                    {
+                    '#e74c3c' if ai_probability>0.5 else '#2ecc71'
+                }
+            }
+
+            ;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MusicTruth Summary</h1>
+    <p>{{ filename }}</p>
+    <div class="score">{{ (ai_probability * 100) | round(0) }}%</div>
+    <h3>VERDICT: {{ 'AI DETECTED' if ai_probability > 0.5 else 'HUMAN CERTIFIED' }}</h3>
+</body>
+
+</html>

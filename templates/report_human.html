@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Music Analysis: {{ filename }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: #fff;
+            color: #444;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .verdict {
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .human {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .ai {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .score {
+            font-size: 5em;
+            font-weight: bold;
+        }
+
+        .summary {
+            font-size: 1.25em;
+            line-height: 1.6;
+        }
+
+        .chart {
+            width: 100%;
+            border: 1px solid #eee;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="verdict {{ 'ai' if ai_probability > 0.5 else 'human' }}">
+            <h1>Analysis Result</h1>
+            <div class="score">{{ (ai_probability * 100) | round(0) }}% Match</div>
+            <p>Likelihood track is AI-generated</p>
+        </div>
+
+        <div class="summary">
+            {{ public_report_content if public_report_content else "No summary available." }}
+        </div>
+
+        <div class="section">
+            <h2>What we found:</h2>
+            <ul>
+                {% for flag in flags %}
+                <li>{{ flag }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="chart">
+            {{ radar_html | safe }}
+        </div>
+    </div>
+</body>
+
+</html>

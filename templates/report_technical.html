@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Technical Audio Analysis: {{ filename }}</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1,
+        h2 {
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .metric-card {
+            border: 1px solid #00ff00;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .score {
+            font-size: 2em;
+            color: #ff00ff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #00ff00;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>[SYSTEM ANALYSIS REPORT]</h1>
+        <p>IDENTIFIER: {{ filename }}</p>
+        <p>TIMESTAMP: {{ timestamp }}</p>
+
+        <div class="score">PROBABILITY_AI: {{ (ai_probability * 100) | round(4) }}%</div>
+
+        <div class="section">
+            <h2>DETECTION_FLAGS</h2>
+            <ul>
+                {% for flag in flags %}
+                <li>>> {{ flag }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>RAW_METRICS_DUMP</h2>
+            <table>
+                <tr>
+                    <th>FEATURE_ID</th>
+                    <th>VAL_SCORE</th>
+                    <th>CONFIDENCE</th>
+                </tr>
+                {% for key, val in results.features.items() %}
+                <tr>
+                    <td>{{ key }}</td>
+                    <td>{{ val.score | round(6) if val.score is defined else 'N/A' }}</td>
+                    <td>{{ val.confidence | round(6) if val.confidence is defined else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>SPECTRAL_DATA_VISUALIZATION</h2>
+            {{ spectrogram_html | safe }}
+        </div>
+    </div>
+</body>
+
+</html>

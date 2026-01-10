@@ -25,12 +25,14 @@ venv/
 env/
 ENV/
 
+
 # Project Specific
 input/*
 !input/.gitkeep
 output/*
 !output/.gitkeep
 temp_separated/
+.tmp/
 .env
 .DS_Store
 

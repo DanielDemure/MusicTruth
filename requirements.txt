@@ -1,13 +1,65 @@
-numpy
-scipy
-librosa
-yt-dlp
-click
-reportlab
-matplotlib
-pydub
-soundfile
-requests
-torch
-transformers
-demucs
+# Core Dependencies
+numpy>=1.26.0,<2.0.0  # NumPy 2.x breaks many audio/scipy tools
+scipy>=1.13.0
+pandas>=2.2.0
+
+# Audio Processing
+librosa>=0.10.2
+soundfile>=0.12.0
+pydub>=0.25.0
+mutagen>=1.47.0
+
+# Performance-Optimized Feature Extraction
+audioflux>=0.1.8
+
+# Comprehensive MIR Library (OPTIONAL - requires C++ build tools)
+# essentia>=2.1b6.dev1110
+# Install manually if needed: pip install essentia
+# Windows: Requires Visual Studio Build Tools
+
+# Source Separation
+demucs>=4.0.0
+
+# Deep Learning
+torch>=2.2.0
+transformers>=4.40.0
+
+# MIDI Analysis
+music21>=9.9.1
+pretty-midi>=0.2.10
+
+# Visualization
+matplotlib>=3.8.0
+seaborn>=0.13.0
+plotly>=5.20.0
+
+# Reporting
+reportlab>=4.1.0
+jinja2>=3.1.0
+
+# Utilities
+click>=8.1.0
+requests>=2.31.0
+yt-dlp>=2024.0.0
+scikit-learn>=1.4.0
+tqdm>=4.66.0
+python-dotenv>=1.0.0  # .env file support
+# CLI & UI
+rich>=13.0.0
+questionary>=2.0.0
+
+# Remote Downloads
+spotdl>=4.2.0
+
+# Upgrade Plan Additions
+audio-separator[cpu]>=0.17.0  # Or [gpu] if supported
+langchain>=0.1.0
+ollama>=0.2.0
+
+# Optional / Feature-Specific (Manual Install Recommended)
+# basic-pitch>=0.3.0  # ⚠️ CURRENTLY CONFLICTS WITH PYTHON 3.12 (TensorFlow dependency)
+# weasyprint>=61.0    # Optional PDF reporting, requires GTK+ on Windows
+
+# Metadata APIs
+spotipy>=2.23.0
+musicbrainzngs>=0.7.1
