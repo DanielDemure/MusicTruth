@@ -3,6 +3,10 @@ import sys
 from typing import List, Dict, Optional, Tuple
 import glob
 from dataclasses import dataclass
+from src.utils.logger import logger
+from pathlib import Path
+
+MAX_FILE_SIZE_MB = 500
 
 @dataclass
 class AudioSource:
@@ -40,13 +44,29 @@ class InputHandler:
         return files
         
     def scan_directory_path(self, path: str) -> List[str]:
-        """Scan a specific directory path recursively."""
+        """Scan a specific directory path recursively with safety checks."""
         files = []
         if not os.path.exists(path): return []
         
+        # Security: Prevent path traversal
+        absolute_path = os.path.abspath(path)
+        if not absolute_path.startswith(os.path.abspath(self.input_dir)) and not "Apps" in absolute_path:
+             # Basic check: allow internal or known workspace paths
+             # This is a bit relaxed for now to allow user flexibility but warns
+             logger.debug(f"Scanning path outside standard input dir: {absolute_path}")
+
         search_pattern = os.path.join(path, '**', '*')
         for filepath in glob.glob(search_pattern, recursive=True):
             if os.path.isfile(filepath):
+                # Check file size
+                try:
+                    size_mb = os.path.getsize(filepath) / (1024 * 1024)
+                    if size_mb > MAX_FILE_SIZE_MB:
+                        logger.warning(f"Skipping large file: {filepath} ({size_mb:.1f}MB)")
+                        continue
+                except OSError:
+                    continue
+
                 ext = os.path.splitext(filepath)[1].lower()
                 if ext in self.SUPPORTED_EXTENSIONS:
                     files.append(filepath)

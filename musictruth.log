@@ -1,0 +1,5 @@
+2026-01-22 19:50:00,371 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 19:50:00,386 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
+2026-01-22 19:50:39,941 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 19:50:39,952 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
+2026-01-22 19:50:47,913 - MusicTruth - ERROR - Extractor frequency_cutoff failed: Unable to allocate 1.69 MiB for an array with shape (1025, 216) and data type complex64

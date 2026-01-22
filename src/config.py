@@ -239,8 +239,45 @@ class DetectionThresholds:
     
     # Overall AI Probability
     ai_probability_high: float = 0.7   # Likely AI
-    ai_probability_medium: float = 0.4  # Uncertain
-    ai_probability_low: float = 0.2    # Likely human
+    ai_probability_medium: float = float(os.getenv('THRESHOLD_AI_MEDIUM', 0.4))
+    ai_probability_low: float = float(os.getenv('THRESHOLD_AI_LOW', 0.2))
+
+
+# ============================================================================
+# Genre Adaptation
+# ============================================================================
+
+class Genre(Enum):
+    """Supported music genres for threshold adaptation."""
+    GENERAL = "general"
+    SOLO_PIANO = "solo_piano"
+    POP_VOCAL = "pop_vocal"
+    ELECTRONIC = "electronic"
+    CLASSICAL = "classical"
+
+@dataclass
+class GenreProfile:
+    """Weights and threshold modifiers for a specific genre."""
+    name: Genre
+    tempo_stability_weight: float = 1.0
+    mfcc_uniformity_weight: float = 1.0
+    spectral_contrast_weight: float = 1.0
+    vocal_artifact_weight: float = 1.0
+
+GENRE_PROFILES = {
+    Genre.GENERAL: GenreProfile(Genre.GENERAL),
+    Genre.SOLO_PIANO: GenreProfile(
+        name=Genre.SOLO_PIANO,
+        tempo_stability_weight=0.3,  # Piano naturally has stable tempo
+        mfcc_uniformity_weight=0.4,   # Solo instrument = uniform MFCC
+        spectral_contrast_weight=0.7, # Acoustic piano consistency
+        vocal_artifact_weight=0.0    # No vocals expected
+    ),
+    Genre.POP_VOCAL: GenreProfile(
+        name=Genre.POP_VOCAL,
+        vocal_artifact_weight=1.2    # Prioritize vocal artifacts
+    )
+}
 
 
 # ============================================================================
@@ -332,6 +369,27 @@ class APIConfig:
     default_analysis_mode: str = field(default_factory=lambda: os.getenv('DEFAULT_ANALYSIS_MODE', 'standard'))
     default_output_formats: str = field(default_factory=lambda: os.getenv('DEFAULT_OUTPUT_FORMATS', 'json,html'))
     
+    def __post_init__(self):
+        """Validate API keys after initialization."""
+        self._validate_keys()
+
+    def _validate_keys(self):
+        """Perform basic format validation on API keys."""
+        if self.gemini_api_key and not self.gemini_api_key.startswith(('AI', 'sk-')):
+            logger.warning(f"Malformed Gemini API key detected: {self._sanitize_key(self.gemini_api_key)}")
+            
+        if self.openai_api_key and not self.openai_api_key.startswith('sk-'):
+            logger.warning(f"Malformed OpenAI API key detected: {self._sanitize_key(self.openai_api_key)}")
+            
+        if self.anthropic_api_key and not self.anthropic_api_key.startswith('sk-ant-'):
+            logger.warning(f"Malformed Anthropic API key detected: {self._sanitize_key(self.anthropic_api_key)}")
+
+    def _sanitize_key(self, key: str) -> str:
+        """Return a version of the key suitable for logging (showing only start/end)."""
+        if not key: return "None"
+        if len(key) <= 12: return "****"
+        return f"{key[:6]}...{key[-4:]}"
+
     def get_llm_config(self, provider: Optional[str] = None) -> tuple[Optional[str], str]:
         """Get API key and model for specified provider (or default)."""
         provider = provider or self.default_llm_provider
@@ -366,11 +424,27 @@ class Config:
         self.mode_features = MODE_FEATURES
     
     def get_features_for_mode(self, mode: AnalysisMode) -> List[str]:
-        """Get list of features for a given analysis mode."""
+        """
+        Retrieves the list of technical features enabled for a given analysis mode.
+
+        Args:
+            mode (AnalysisMode): The selected analysis depth (e.g., QUICK, DEEP).
+
+        Returns:
+            List[str]: Names of features to be extracted.
+        """
         return self.mode_features.get(mode, [])
     
     def is_feature_available(self, feature_name: str) -> bool:
-        """Check if a feature can be used based on library availability."""
+        """
+        Checks if a specific feature is usable based on installed system dependencies.
+
+        Args:
+            feature_name (str): The name of the feature to check.
+
+        Returns:
+            bool: True if all required libraries are present.
+        """
         # Map features to required libraries
         feature_requirements = {
             'audioflux_features': self.features.audioflux_available,

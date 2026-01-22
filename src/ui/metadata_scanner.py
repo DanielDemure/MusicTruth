@@ -34,6 +34,7 @@ class MetadataScanner:
                 'artist': 'Unknown Artist',
                 'album': 'Unknown Album',
                 'title': os.path.splitext(os.path.basename(path))[0],
+                'genre': 'general',
                 'source': 'filename'
             }
             
@@ -160,6 +161,7 @@ class MetadataScanner:
             table.add_row("Artist", track['artist'], track['source'])
             table.add_row("Album", track['album'], track['source'])
             table.add_row("Title", track['title'], track['source'])
+            table.add_row("Genre", track['genre'], 'Profile Adaptation')
             
             console.print(table)
             
@@ -168,8 +170,9 @@ class MetadataScanner:
                 "Edit Artist",
                 "Edit Album",
                 "Edit Title",
-                Choice("Apply Artist/Album to ALL TRACKS", value="apply_all"),
-                Choice("Apply Artist/Album to REMAINING", value="apply_remaining"),
+                "Edit Genre",
+                Choice("Apply Artist/Album/Genre to ALL TRACKS", value="apply_all"),
+                Choice("Apply Artist/Album/Genre to REMAINING", value="apply_remaining"),
                 "Skip Track"
             ]
             
@@ -184,18 +187,20 @@ class MetadataScanner:
                     reviewed_tracks.append(track)
                     break
                 elif choice == "apply_all":
-                    # Apply to ALL (including already reviewed if we wanted, but let's stick to simple)
+                    # Apply to ALL
                     for t in tracks:
                         t['artist'] = track['artist']
                         t['album'] = track['album']
+                        t['genre'] = track['genre']
                         t['source'] = 'manual (global)'
-                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']}' to all tracks.[/green]")
+                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']} ({track['genre']})' to all tracks.[/green]")
                 elif choice == "apply_remaining":
                     for t in tracks[i:]:
                         t['artist'] = track['artist']
                         t['album'] = track['album']
+                        t['genre'] = track['genre']
                         t['source'] = 'manual (global)'
-                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']}' to remaining tracks.[/green]")
+                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']} ({track['genre']})' to remaining tracks.[/green]")
                 elif choice == "Edit Artist":
                     track['artist'] = questionary.text("Artist:", default=track['artist']).ask()
                     track['source'] = 'manual'
@@ -205,6 +210,13 @@ class MetadataScanner:
                 elif choice == "Edit Title":
                     track['title'] = questionary.text("Title:", default=track['title']).ask()
                     track['source'] = 'manual'
+                elif choice == "Edit Genre":
+                    from src.config import Genre
+                    track['genre'] = questionary.select(
+                        "Genre:",
+                        choices=[g.value for g in Genre],
+                        default=track['genre']
+                    ).ask()
                 elif choice == "Skip Track":
                     reviewed_tracks.append(track)
                     break

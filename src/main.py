@@ -200,8 +200,12 @@ def main():
         # Determine features based on mode
         # analyzer.analyze_file(file, mode)
         try:
-            # Placeholder for the actual call - we need to refactor analyzer.py to expose this cleanly
-            results = analyzer.analyze_audio(source.path_or_url, mode=AnalysisMode(args.mode))
+            # Pass metadata to allow genre-specific weighting
+            results = analyzer.analyze_audio(
+                source.path_or_url, 
+                mode=AnalysisMode(args.mode),
+                metadata=source.metadata
+            )
             
             # Enrich with Metadata (LLM)
             if researcher_agent:
