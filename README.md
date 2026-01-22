@@ -21,12 +21,14 @@
 
 ### 🕵️ **Forensic Analysis**
 
-* **19+ Feature Extractors**:
-  * **Spectral**: hard cutoffs (16kHz/20kHz), grid anomalies, unnatural silence.
+* **20+ Feature Extractors**:
+  * **Spectral**: Hard cutoffs (16kHz/20kHz), grid anomalies, unnatural silence.
   * **Temporal**: Robotic quantization, perfect beat stability.
   * **Vocal**: "Perfect pitch" (Auto-tune) artifacts, lack of breath.
+  * **Forensic**: Silence pattern analysis (AI vs. human expressive gaps), Shannon entropy detection.
   * **Provider Fingerprints**: Detects specific artifacts from **Suno** and **Udio**.
-* **Source Separation**: Isolates vocals/drums using `demucs` for cleaner analysis.
+* **Source Separation**: Isolates vocals/drums/piano using `demucs` (htdemucs_ft) for cleaner stem-level analysis.
+* **Genre-Specific Calibration**: Adaptive thresholds for solo piano, pop vocals, and other genres to reduce false positives.
 
 ### 📡 **Universal Input**
 
@@ -86,13 +88,23 @@ The wizard will guide you through:
 For automation or power users:
 
 ```bash
-python src/main.py \
+python -m src.main \
   --input "https://open.spotify.com/track/..." \
   --project "Analysis_V1" \
   --mode forensic \
+  --genre solo_piano \
   --llm-provider openai \
   --llm-key "sk-..." 
 ```
+
+**Analysis Modes**:
+- `quick` - 30s basic checks (spectral cutoff, tempo)
+- `standard` - 2min comprehensive analysis (default)
+- `deep` - 10min with source separation
+- `forensic` - 30min+ with Demucs stem separation, silence analysis, and entropy detection
+
+**Genre Calibration**:
+Use `--genre solo_piano` to apply adaptive thresholds that reduce false positives on naturally "AI-like" music (e.g., consistent tempo, uniform timbre).
 
 ---
 

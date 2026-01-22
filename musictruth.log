@@ -3,3 +3,25 @@
 2026-01-22 19:50:39,941 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
 2026-01-22 19:50:39,952 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
 2026-01-22 19:50:47,913 - MusicTruth - ERROR - Extractor frequency_cutoff failed: Unable to allocate 1.69 MiB for an array with shape (1025, 216) and data type complex64
+2026-01-22 20:00:55,158 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 20:00:55,171 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
+2026-01-22 20:01:12,049 - MusicTruth - ERROR - Extractor frequency_cutoff failed: Unable to allocate 29.1 MiB for an array with shape (1025, 7438) and data type float32
+2026-01-22 20:01:13,069 - MusicTruth - ERROR - Extractor spectral_peaks failed: Unable to allocate 58.2 MiB for an array with shape (1025, 7438) and data type complex64
+2026-01-22 20:01:14,089 - MusicTruth - ERROR - Extractor tempo_stability failed: Unable to allocate 3.63 MiB for an array with shape (3807952,) and data type bool
+2026-01-22 20:06:39,451 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 20:06:39,483 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
+2026-01-22 20:07:05,453 - MusicTruth - INFO - Running forensic stem separation for Iris Hond - Between.mp3...
+2026-01-22 20:07:05,502 - MusicTruth - INFO - Starting Demucs separation for Iris Hond - Between.mp3 (model: htdemucs_ft)...
+2026-01-22 20:07:05,522 - MusicTruth - ERROR - Demucs CLI not found. Please install with 'pip install demucs'.
+2026-01-22 20:07:14,747 - MusicTruth - ERROR - Extractor tempo_stability failed: Unable to allocate 41.0 MiB for an array with shape (361, 7438) and data type complex128
+2026-01-22 20:07:16,163 - MusicTruth - ERROR - Extractor onset_detection failed: Unable to allocate 29.1 MiB for an array with shape (1025, 7438) and data type float32
+2026-01-22 20:07:17,184 - MusicTruth - ERROR - Extractor rhythm_complexity failed: Unable to allocate 58.2 MiB for an array with shape (1025, 7438) and data type complex64
+2026-01-22 20:07:19,286 - MusicTruth - ERROR - Extractor key_detection failed: Unable to allocate 29.1 MiB for an array with shape (1025, 7438) and data type float32
+2026-01-22 20:07:25,354 - MusicTruth - ERROR - Extractor hpss_analysis failed: Unable to allocate 58.2 MiB for an array with shape (1025, 7438) and data type complex64
+2026-01-22 20:07:26,786 - MusicTruth - ERROR - Extractor vocal_pitch failed: Unable to allocate 116. MiB for an array with shape (2049, 7438) and data type complex64
+2026-01-22 20:07:28,108 - MusicTruth - ERROR - Extractor vocal_vibrato failed: Unable to allocate 116. MiB for an array with shape (2049, 7438) and data type complex64
+2026-01-22 20:07:30,638 - MusicTruth - ERROR - Extractor structural_analysis failed: Unable to allocate 29.1 MiB for an array with shape (1025, 7438) and data type float32
+2026-01-22 20:15:27,788 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 20:15:27,802 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here
+2026-01-22 20:16:12,979 - MusicTruth - WARNING - Malformed OpenAI API key detected: your_o...here
+2026-01-22 20:16:12,986 - MusicTruth - WARNING - Malformed Anthropic API key detected: your_a...here

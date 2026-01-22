@@ -36,6 +36,7 @@ class Analyzer:
             from .features.essentia_extractor import get_essentia_extractors
             from .features.transcription import get_midi_extractors as get_transcription_extractors
             from .features.deepfake import get_dl_detectors
+            from .features.forensic import get_forensic_extractors
             
             all_getters = [
                 get_spectral_extractors,
@@ -47,7 +48,8 @@ class Analyzer:
                 get_provider_extractors,
                 get_essentia_extractors,
                 get_transcription_extractors,
-                get_dl_detectors
+                get_dl_detectors,
+                get_forensic_extractors
             ]
             
             for getter in all_getters:
@@ -92,15 +94,42 @@ class Analyzer:
         scores = []
         
         # 2. Run Extractors
+        # Special handling for FORENSIC mode: Separate stems first
+        input_file_map = {"mix": file_path}
+        
+        if mode == AnalysisMode.FORENSIC:
+            try:
+                from src.layers.processing.separation import separate_audio
+                # Use htdemucs_ft as per forensic report recommendation
+                logger.info(f"Running forensic stem separation for {os.path.basename(file_path)}...")
+                stems = separate_audio(file_path, model_name="htdemucs_ft")
+                if stems:
+                    input_file_map.update(stems)
+                    logger.info(f"Stems available: {list(stems.keys())}")
+            except Exception as e:
+                logger.error(f"Forensic separation failed: {e}")
+
         for name, extractor in self.extractors.items():
             should_run = False
+            target_audio = input_file_map["mix"] # Default to mix
             
-            if mode == AnalysisMode.FORENSIC:
+            # Forensic extractors run on specific stems if available, or mix if not
+            if "forensic" in name:
+                if mode == AnalysisMode.FORENSIC:
+                    should_run = True
+                    # Silence analysis targets 'other' (piano) or 'vocals' if available
+                    # Entropy analysis targets 'other' (piano) or mix
+                    if "silence" in name and "other" in input_file_map:
+                        target_audio = input_file_map["other"]
+                    elif "entropy" in name and "other" in input_file_map:
+                        target_audio = input_file_map["other"]
+            
+            elif mode == AnalysisMode.FORENSIC:
                 should_run = True
             elif mode == AnalysisMode.DEEP:
                 should_run = True
             elif mode == AnalysisMode.STANDARD:
-                if not any(k in name for k in ['structural', 'midi', 'provider']):
+                if not any(k in name for k in ['structural', 'midi', 'provider', 'forensic']):
                     should_run = True
             elif mode == AnalysisMode.QUICK:
                 if any(k in name for k in ['cutoff', 'peak', 'tempo']):
@@ -110,7 +139,19 @@ class Analyzer:
                 
             if should_run:
                 try:
-                    res = extractor.extract(file_path, y=y, sr=sr)
+                    # Load target audio if it's different from the mix we already loaded
+                    current_y, current_sr = y, sr
+                    
+                    if target_audio != file_path:
+                        # We need to load the stem
+                        # Check if we should cache this? For now, load on demand (stems are usually smaller)
+                        try:
+                            current_y, current_sr = load_audio(target_audio, sr=22050)
+                        except Exception as e:
+                            logger.error(f"Could not load stem {target_audio}: {e}")
+                            continue
+
+                    res = extractor.extract(target_audio, y=current_y, sr=current_sr)
                     results["features"][name] = res.to_dict()
                     
                     if res.flags:
@@ -136,6 +177,10 @@ class Analyzer:
                 
                 if "ml" in name or "provider" in name:
                     weight = 2.0
+                
+                # Report recommends high weight for Silence (30%) and Entropy (20%)
+                if "forensic" in name:
+                    weight = 4.0 
                 
                 if genre_name != Genre.GENERAL:
                     if "tempo" in name:

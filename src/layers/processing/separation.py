@@ -18,6 +18,9 @@ def separate_audio(file_path: str, output_dir: str = "temp_separated", model_nam
     Returns:
         Dictionary mapping stem names ('vocals', 'instrumental', etc.) to file paths.
     """
+    if "demucs" in model_name:
+        return separate_audio_demucs(file_path, output_dir, model_name)
+
     try:
         from audio_separator.separator import Separator
     except ImportError:
@@ -76,4 +79,81 @@ def separate_audio(file_path: str, output_dir: str = "temp_separated", model_nam
 
     except Exception as e:
         logger.exception(f"Error during separation: {e}")
+        return {}
+
+
+def separate_audio_demucs(file_path: str, output_dir: str = "temp_separated", model_name: str = "htdemucs_ft") -> Dict[str, str]:
+    """
+    Separates audio using Demucs explicitly (subprocess or library).
+    Preferred for forensic analysis due to better quality on 'other' (piano) stem.
+    
+    Args:
+        file_path: Path to input audio
+        output_dir: Base output directory
+        model_name: Demucs model code (htdemucs_ft, htdemucs_6s, etc.)
+        
+    Returns:
+        Dict mapping stem names to absolute file paths.
+    """
+    import subprocess
+    import shutil
+    
+    file_path = Path(file_path).resolve()
+    output_dir = Path(output_dir).resolve()
+    
+    logger.info(f"Starting Demucs separation for {file_path.name} (model: {model_name})...")
+    
+    # Construct command: demucs -n <model> -o <outdir> <file>
+    # We use subprocess to isolate it and capture output
+    cmd = [
+        "demucs",
+        "-n", model_name,
+        "-o", str(output_dir),
+        str(file_path)
+    ]
+    
+    try:
+        # Check if installed
+        subprocess.run(["demucs", "--help"], capture_output=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        logger.error("Demucs CLI not found. Please install with 'pip install demucs'.")
+        return {}
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        # logger.debug(f"Demucs output: {result.stdout}")
+        
+        # Demucs output structure: <outdir>/<model>/<track_name>/<stem>.wav
+        # We need to find this folder. 'track_name' is usually filename without ext.
+        track_name = file_path.stem
+        
+        # Demucs might sanitize the filename, so we look for the directory
+        expected_dir = output_dir / model_name / track_name
+        
+        if not expected_dir.exists():
+            # Try to find it broadly if name sanitization happened
+            start_dir = output_dir / model_name
+            candidates = list(start_dir.glob("*"))
+            # Heuristic: find most recent directory or matching name
+            if candidates:
+                expected_dir = candidates[0] # Assumption if running singly
+                logger.warning(f"Could not find exact match for {track_name}, using {expected_dir.name}")
+            else:
+                logger.error(f"Demucs finished but output directory empty: {start_dir}")
+                return {}
+                
+        # Map stems
+        stems = {}
+        for stem_file in expected_dir.glob("*.wav"):
+            key = stem_file.stem # vocals, drums, bass, other
+            stems[key] = str(stem_file)
+            
+        logger.info(f"Demucs separation successful. Stems: {list(stems.keys())}")
+        return stems
+        
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Demucs separation failed: {e.stderr}")
+        return {}
+    except Exception as e:
+        logger.exception(f"Unexpected error in Demucs separation: {e}")
         return {}

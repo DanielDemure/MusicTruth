@@ -15,7 +15,7 @@ from src.utils.logger import logger
 
 try:
     # Relative imports for package execution (python -m src.main)
-    from .config import config, AnalysisMode
+    from .config import config, AnalysisMode, Genre
     from .layers.orchestration.history import history_manager
     from .layers.input.handler import get_input_handler, AudioSource
     from .layers.analysis.core import Analyzer
@@ -28,7 +28,7 @@ except ImportError:
     # Fallback for script execution (python src/main.py) - though discouraged
     # If we are running as script, we need to fix path to see 'src' package
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from src.config import config, AnalysisMode
+    from src.config import config, AnalysisMode, Genre
     from src.layers.orchestration.history import history_manager
     from src.layers.input.handler import get_input_handler, AudioSource
     from src.layers.analysis.core import Analyzer
@@ -48,6 +48,7 @@ def main():
     
     # Multi-source
     parser.add_argument("--group-id", help="Manually specify a Group ID for multi-source verification")
+    parser.add_argument("--genre", choices=[g.value for g in Genre], default="general", help="Manually specify genre for calibration")
     
     # LLM Options
     parser.add_argument("--llm-provider", default=None, choices=["openai", "anthropic", "gemini", "deepseek", "ollama", "lm_studio"], help="LLM Provider")
@@ -201,10 +202,14 @@ def main():
         # analyzer.analyze_file(file, mode)
         try:
             # Pass metadata to allow genre-specific weighting
+            metadata = source.metadata or {}
+            if not metadata.get('genre') or metadata.get('genre') == 'general':
+                metadata['genre'] = args.genre
+                
             results = analyzer.analyze_audio(
                 source.path_or_url, 
                 mode=AnalysisMode(args.mode),
-                metadata=source.metadata
+                metadata=metadata
             )
             
             # Enrich with Metadata (LLM)
