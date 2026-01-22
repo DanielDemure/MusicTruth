@@ -21,6 +21,7 @@ try:
     from questionary import Choice
     from rich.console import Console
     from rich.panel import Panel
+    from rich.table import Table
     from rich import print as rprint
     UI_AVAILABLE = True
 except ImportError:
@@ -122,12 +123,31 @@ def run_wizard() -> argparse.Namespace:
         elif step == "MetadataReview":
             # Scan files with mutagen
             from .metadata_scanner import MetadataScanner
+            from ..layers.input.handler import InputHandler
+            
             scanner = MetadataScanner()
+            input_handler = InputHandler(os.getcwd()) # Base dir not critical for scan_directory_path
             
-            tracks = scanner.scan_files(state["inputs"])
+            # Flatten inputs into a list of file paths
+            file_paths = []
+            for inp in state["inputs"]:
+                if inp["type"] == "Local Folder":
+                    file_paths.extend(input_handler.scan_directory_path(inp["value"]))
+                elif inp["type"] == "Local File":
+                    file_paths.append(inp["value"])
             
-            # Auto-fetch if configured
-            scanner.auto_fetch_metadata(tracks)
+            if not file_paths:
+                rprint("[yellow]⚠️  No audio files found in the provided sources.[/yellow]")
+                if not questionary.confirm("Continue anyway?").ask():
+                    next_action = "back"
+                    continue
+            
+            tracks = scanner.scan_files(file_paths)
+            
+            # Auto-fetch if configured (and if user wants to for this session)
+            if any(file_paths):
+                if questionary.confirm("Attempt to auto-fetch missing metadata from MusicBrainz/Spotify?", default=True).ask():
+                    scanner.auto_fetch_metadata(tracks)
             
             # Interactive review
             reviewed = scanner.interactive_review(tracks)
@@ -229,7 +249,7 @@ def run_wizard() -> argparse.Namespace:
             ans = questionary.select(
                 "Select Report Style:",
                 choices=styles,
-                default=Choice("Combined (Technical + Summary) [DEFAULT]")
+                default="combined"
             ).ask()
             
             if ans == "BACK":
@@ -252,7 +272,8 @@ def run_wizard() -> argparse.Namespace:
                 results.append(validator.validate_spotify())
                 results.append(validator.validate_musicbrainz())
                 results.append(validator.validate_disk_space())
-                results.append(validator.validate_inputs(state["inputs"]))
+                local_paths = [inp["value"] for inp in state["inputs"] if inp["type"] in ["Local File", "Local Folder"]]
+                results.append(validator.validate_inputs(local_paths))
                 
                 # Show results table
                 table = Table(title="System Validation Results")

@@ -7,11 +7,13 @@ from mutagen.oggvorbis import OggVorbis
 from mutagen.mp4 import MP4
 from typing import List, Dict, Optional
 import questionary
+from questionary import Choice
 from rich.console import Console
 from rich.table import Table
 from rich import print as rprint
 
 from src.config import config
+from src.utils.logger import logger
 
 console = Console()
 
@@ -22,7 +24,7 @@ class MetadataScanner:
     
     def scan_files(self, file_paths: List[str]) -> List[Dict]:
         """
-        Scan a list of files for basic metadata.
+        Scan a list of file path strings for basic metadata.
         """
         results = []
         for path in file_paths:
@@ -42,9 +44,9 @@ class MetadataScanner:
                     if 'album' in audio: metadata['album'] = audio['album'][0]
                     if 'title' in audio: metadata['title'] = audio['title'][0]
                     metadata['source'] = 'id3'
-            except Exception:
+            except Exception as e:
                 # Fallback to filename parsing
-                pass
+                logger.debug(f"ID3 extraction failed for {path}: {e}")
                 
             results.append(metadata)
         return results
@@ -78,33 +80,56 @@ class MetadataScanner:
                 )
                 sp = spotipy.Spotify(auth_manager=auth_manager)
             except Exception as e:
+                logger.warning(f"Spotify auth failed: {e}")
                 rprint(f"[yellow]⚠️ Spotify auth failed: {e}[/yellow]")
                 can_spot = False
 
         for track in tracks:
+            # Improvement: If we have a folder name that looks like metadata, use it
+            folder_hint = ""
+            if 'file_path' in track:
+                dir_name = os.path.basename(os.path.dirname(track['file_path']))
+                if " - " in dir_name:
+                    folder_hint = dir_name
+
             query = f"artist:{track['artist']} recording:{track['title']}"
+            if folder_hint and track['artist'] == 'Unknown Artist':
+                rprint(f"  [dim]Using folder hint: {folder_hint}[/dim]")
+                query = f"{folder_hint} {track['title']}"
+
             rprint(f"  🔍 Searching: [dim]{track['artist']} - {track['title']}[/dim]")
             
             # 1. MusicBrainz Lookup
             if can_mb:
                 try:
                     import musicbrainzngs
-                    result = musicbrainzngs.search_recordings(query=query, limit=1)
+                    # Limit search but check scores
+                    result = musicbrainzngs.search_recordings(query=query, limit=5)
                     if result['recording-list']:
-                        rec = result['recording-list'][0]
-                        track['artist'] = rec['artist-credit'][0]['name']
-                        track['title'] = rec['title']
-                        if 'release-list' in rec:
-                            track['album'] = rec['release-list'][0]['title']
-                        track['source'] = 'MusicBrainz'
-                        continue # Found it
+                        # Verification: Check if it's a "real" match or just noise
+                        # MusicBrainz returns 'ext:score'
+                        top_match = result['recording-list'][0]
+                        score = int(top_match.get('ext:score', '0'))
+                        
+                        if score > 80: # Reasonable threshold
+                            track['artist'] = top_match['artist-credit'][0]['name']
+                            track['title'] = top_match['title']
+                            if 'release-list' in top_match:
+                                track['album'] = top_match['release-list'][0]['title']
+                            track['source'] = 'MusicBrainz'
+                            continue 
+                        else:
+                            rprint(f"    [dim]Low confidence match ({score}). skipping MB.[/dim]")
                 except Exception:
                     pass
             
-            # 2. Spotify Lookup
+            # 2. Spotify Lookup (Often more accurate for modern titles)
             if can_spot and sp:
                 try:
                     q = f"track:{track['title']} artist:{track['artist']}"
+                    if track['artist'] == 'Unknown Artist' and folder_hint:
+                        q = f"{folder_hint} {track['title']}"
+                        
                     res = sp.search(q=q, type='track', limit=1)
                     if res['tracks']['items']:
                         item = res['tracks']['items'][0]
@@ -143,6 +168,8 @@ class MetadataScanner:
                 "Edit Artist",
                 "Edit Album",
                 "Edit Title",
+                Choice("Apply Artist/Album to ALL TRACKS", value="apply_all"),
+                Choice("Apply Artist/Album to REMAINING", value="apply_remaining"),
                 "Skip Track"
             ]
             
@@ -156,6 +183,19 @@ class MetadataScanner:
                 if choice == "Accept":
                     reviewed_tracks.append(track)
                     break
+                elif choice == "apply_all":
+                    # Apply to ALL (including already reviewed if we wanted, but let's stick to simple)
+                    for t in tracks:
+                        t['artist'] = track['artist']
+                        t['album'] = track['album']
+                        t['source'] = 'manual (global)'
+                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']}' to all tracks.[/green]")
+                elif choice == "apply_remaining":
+                    for t in tracks[i:]:
+                        t['artist'] = track['artist']
+                        t['album'] = track['album']
+                        t['source'] = 'manual (global)'
+                    rprint(f"[green]✅ Applied '{track['artist']} - {track['album']}' to remaining tracks.[/green]")
                 elif choice == "Edit Artist":
                     track['artist'] = questionary.text("Artist:", default=track['artist']).ask()
                     track['source'] = 'manual'
@@ -166,8 +206,9 @@ class MetadataScanner:
                     track['title'] = questionary.text("Title:", default=track['title']).ask()
                     track['source'] = 'manual'
                 elif choice == "Skip Track":
-                    # We keep it but mark it as skipped or just move on
                     reviewed_tracks.append(track)
                     break
+
+        return reviewed_tracks
 
         return reviewed_tracks

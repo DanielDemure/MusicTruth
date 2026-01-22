@@ -7,6 +7,7 @@ import os
 import argparse
 from typing import List, Optional
 import time
+from src.utils.logger import logger
 
 
 # Remove the sys.path hack that breaks package structure
@@ -220,9 +221,8 @@ def main():
             all_results[source.path_or_url] = results
             
         except Exception as e:
-            print(f"   ❌ Analysis failed: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Analysis failed: {e}")
+            logger.debug(e, exc_info=True)
 
     # 5. Cross-Check (if Multiple Sources)
     comparator = CrossCheckComparator()

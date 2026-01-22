@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
+from src.utils.logger import logger
 
 # Load environment variables from .env file
 try:
@@ -74,55 +75,55 @@ class FeatureFlags:
             import audioflux
             self.audioflux_available = True
         except ImportError:
-            pass
+            logger.debug("AudioFlux not installed (optional).")
         
         try:
             import essentia
             self.essentia_available = True
         except ImportError:
-            pass
+            logger.debug("Essentia not installed (optional).")
         
         try:
             import torch
             self.torch_available = True
         except ImportError:
-            pass
+            logger.debug("PyTorch not installed. Deep learning features disabled.")
         
         try:
             import transformers
             self.transformers_available = True
         except ImportError:
-            pass
+            logger.debug("Transformers not installed. LLM/Deepfake features disabled.")
         
         try:
             import music21
             self.music21_available = True
         except ImportError:
-            pass
+            logger.debug("music21 not installed. MIDI analysis disabled.")
         
         try:
             import pretty_midi
             self.pretty_midi_available = True
         except ImportError:
-            pass
+            logger.debug("pretty_midi not installed. MIDI analysis disabled.")
         
         try:
             import plotly
             self.plotly_available = True
         except ImportError:
-            pass
+            logger.debug("Plotly not installed (optional).")
         
         try:
             import seaborn
             self.seaborn_available = True
         except ImportError:
-            pass
+            logger.debug("Seaborn not installed (optional).")
         
         try:
             import demucs
             self.demucs_available = True
         except ImportError:
-            pass
+            logger.debug("Demucs not installed. Source separation disabled.")
 
 
 # ============================================================================

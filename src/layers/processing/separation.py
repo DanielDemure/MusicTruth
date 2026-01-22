@@ -2,6 +2,7 @@ import os
 import logging
 from pathlib import Path
 from typing import Dict
+from src.utils.logger import logger
 
 def separate_audio(file_path: str, output_dir: str = "temp_separated", model_name: str = "UVR-MDX-Net-Inst_HQ_3.onnx") -> Dict[str, str]:
     """
@@ -20,14 +21,14 @@ def separate_audio(file_path: str, output_dir: str = "temp_separated", model_nam
     try:
         from audio_separator.separator import Separator
     except ImportError:
-        print("❌ audio-separator not installed. Please install it via pip.")
+        logger.error("audio-separator not installed. Please install it via pip.")
         return {}
 
     file_path = Path(file_path)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    print(f"🎵 Separating stems for {file_path.name} using {model_name}...")
+    logger.info(f"Separating stems for {file_path.name} using {model_name}...")
     
     try:
         # Initialize Separator with options
@@ -70,11 +71,9 @@ def separate_audio(file_path: str, output_dir: str = "temp_separated", model_nam
              # Sometimes instrumental is named differently or we just need to find it
              pass
 
-        print(f"   ✅ Separation complete: {list(stems.keys())}")
+        logger.info(f"Separation complete: {list(stems.keys())}")
         return stems
 
     except Exception as e:
-        print(f"❌ Error during separation: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.exception(f"Error during separation: {e}")
         return {}

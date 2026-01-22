@@ -27,6 +27,7 @@ ENV/
 
 
 # Project Specific
+documents/
 input/*
 !input/.gitkeep
 output/*
